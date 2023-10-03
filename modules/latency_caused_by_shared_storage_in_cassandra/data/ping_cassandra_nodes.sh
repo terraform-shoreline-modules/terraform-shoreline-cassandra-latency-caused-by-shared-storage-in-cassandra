@@ -1,0 +1,3 @@
+ping ${CASSANDRA_NODE1}
+
+ping ${CASSANDRA_NODE2}

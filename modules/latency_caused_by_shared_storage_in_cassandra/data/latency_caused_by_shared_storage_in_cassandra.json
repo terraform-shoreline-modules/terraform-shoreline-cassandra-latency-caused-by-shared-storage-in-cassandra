@@ -1,0 +1,138 @@
+{
+  "name": "latency_caused_by_shared_storage_in_cassandra",
+  "description": "This incident type refers to a situation where a delay or slowness occurs in a system that uses Cassandra database due to the shared storage. Shared storage means multiple servers are accessing the same storage unit, and this can cause latency issues. This type of incident can lead to performance degradation, and it needs to be addressed promptly to ensure optimal system performance.",
+  "params": [
+    {
+      "name": "TABLE_NAME",
+      "value": ""
+    },
+    {
+      "name": "NEW_STORAGE_PATH",
+      "value": ""
+    },
+    {
+      "name": "CASSANDRA_NODE2",
+      "value": ""
+    },
+    {
+      "name": "SHARED_STORAGE",
+      "value": ""
+    },
+    {
+      "name": "CASSANDRA_NODE1",
+      "value": ""
+    },
+    {
+      "name": "CASSANDRA_NODE",
+      "value": ""
+    },
+    {
+      "name": "SHARED_STORAGE_PATH",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Latency Caused by Shared Storage in Cassandra\nThis incident type refers to a situation where a delay or slowness occurs in a system that uses Cassandra database due to the shared storage. Shared storage means multiple servers are accessing the same storage unit, and this can cause latency issues. This type of incident can lead to performance degradation, and it needs to be addressed promptly to ensure optimal system performance."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if Cassandra is running"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `systemctl status cassandra`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check for any errors in Cassandra logs"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -f /var/log/cassandra/system.log`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the Cassandra cluster status"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `nodetool status`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the status of the shared storage"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `df -h ${SHARED_STORAGE}`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the network latency between Cassandra nodes"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_ping_cassandra_nodes($CASSANDRA_NODE2, $CASSANDRA_NODE1)"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the read/write latency of Cassandra using cqlsh"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `cqlsh ${CASSANDRA_NODE} -e \"SELECT * FROM ${TABLE_NAME} LIMIT 10;\"`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Split the shared storage into separate storage units to reduce contention for resources. It is recommended to avoid shared storage like EBS, SAN, NAS. Shared storage degrades performance and creates a single point of failure."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_cassandra_storage_migration($NEW_STORAGE_PATH, $SHARED_STORAGE, $SHARED_STORAGE_PATH)"
+    }
+  ]
+}
